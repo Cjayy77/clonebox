@@ -1,0 +1,39 @@
+{
+  "name": "device-clone",
+  "version": "1.0.0",
+  "description": "Scan a machine's installed tools and SDKs, pick what matters, and package it for a new device.",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "prune": "node bin/clonebox-prune.js"
+  },
+  "author": "Cedric",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "archiver": "^7.0.1"
+  },
+  "build": {
+    "appId": "com.cedric.deviceclone",
+    "productName": "Clonebox",
+    "files": [
+      "src/**/*"
+    ],
+    "win": {
+      "target": "portable"
+    },
+    "mac": {
+      "target": "dir"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  },
+  "bin": {
+    "clonebox-prune": "./bin/clonebox-prune.js"
+  }
+}

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';" />
+<title>Clonebox</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app">
+
+  <div class="toolbar">
+    <button class="btn btn-default" id="scanBtn">Scan Device</button>
+    <span class="sep"></span>
+    <label class="chk"><input type="checkbox" id="deepSizeScan" /> Measure sizes</label>
+    <label class="chk"><input type="checkbox" id="pinnedVersions" /> Pin versions</label>
+    <span class="sep"></span>
+    <label class="field">Target OS
+      <select id="targetOs">
+        <option value="same">This machine</option>
+        <option value="win32">Windows</option>
+        <option value="darwin">macOS</option>
+        <option value="linux">Linux</option>
+      </select>
+    </label>
+    <label class="field">Substitutions
+      <select id="equivPolicy" title="What the installer does when a package has no direct counterpart on the target OS">
+        <option value="ask">Ask each time</option>
+        <option value="always">Install automatically</option>
+        <option value="never">Never substitute</option>
+      </select>
+    </label>
+    <div class="spacer"></div>
+    <input type="search" id="searchInput" class="search" placeholder="Search" />
+  </div>
+
+  <div class="split">
+    <div class="pane-left">
+      <div class="pane-head">Categories</div>
+      <ul class="tree" id="categoryList">
+        <li class="tree-empty">No scan yet</li>
+      </ul>
+    </div>
+
+    <div class="splitter"></div>
+
+    <div class="pane-right">
+      <div class="grid-head">
+        <div class="cell cell-check"><input type="checkbox" id="headCheck" title="Select all shown" /></div>
+        <div class="cell cell-name sortable" data-sort="name">Name</div>
+        <div class="cell cell-ver sortable" data-sort="version">Version</div>
+        <div class="cell cell-src sortable" data-sort="source">Source</div>
+        <div class="cell cell-size sortable" data-sort="bytes">Size</div>
+        <div class="cell cell-status sortable" data-sort="status">Transfer</div>
+      </div>
+      <div class="grid-body" id="itemList">
+        <div class="placeholder">
+          <p>Click <b>Scan Device</b> to inventory installed packages, SDKs and tool folders.</p>
+        </div>
+      </div>
+      <div class="banner" id="compatBanner" hidden></div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <span id="statusCounts">Ready</span>
+    <span class="status-sep">|</span>
+    <span id="statusSel">0 selected</span>
+    <div class="spacer"></div>
+    <button class="btn btn-danger" id="uninstallBtn" disabled>Uninstall…</button>
+    <button class="btn" id="packageLocalBtn" disabled>Save to Folder…</button>
+    <button class="btn btn-default" id="packageCloudBtn" disabled>Prepare for Cloud…</button>
+  </div>
+
+  <div class="log" id="scanLog" hidden>
+    <div class="log-head">
+      <span>Activity</span>
+      <button class="log-close" id="logClose">×</button>
+    </div>
+    <div class="log-body" id="scanLogBody"></div>
+  </div>
+</div>
+
+<div class="modal-back" id="progressOverlay" hidden>
+  <div class="modal">
+    <div class="modal-head" id="progressTitle">Working…</div>
+    <div class="modal-body" id="progressLog"></div>
+    <div class="modal-foot">
+      <button class="btn btn-default" id="progressCloseBtn" hidden>Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="renderer.js"></script>
+</body>
+</html>
