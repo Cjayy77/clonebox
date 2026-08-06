@@ -46,6 +46,10 @@
 
 * { box-sizing: border-box; }
 
+/* The `hidden` attribute only sets `display: none` in the UA sheet, so any
+   class rule with a `display` of its own (.modal-back, .log) beats it. */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   height: 100%;
@@ -223,6 +227,11 @@ select {
   font-size: 11px;
   color: var(--text-dim);
 }
+/* The header cell is a flexbox and right-aligns via justify-content; row cells
+   are plain blocks, so they need text-align to line the numbers up with it. */
+.row .cell-size { text-align: right; }
+.row .cell-size.unmeasured { color: var(--text-faint); }
+.row .cell-size.inferred { color: var(--warn); }
 .row.checked .cell-ver, .row.checked .cell-size, .row.checked .cell-src { color: var(--sel-text); }
 .row input[type="checkbox"] { margin: 0; }
 
@@ -253,6 +262,77 @@ select {
   padding: 40px 20px;
   text-align: center;
   color: var(--text-faint);
+}
+
+/* ---------- Scanning indicators ----------
+   Individual probes (winget especially) can run quiet for tens of seconds,
+   so the indicators are motion-based: they keep moving between log lines,
+   and an elapsed clock proves the scan is alive rather than wedged. */
+.spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: spin 0.7s linear infinite;
+}
+.spinner.lg { width: 30px; height: 30px; border-width: 3px; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.scanbar {
+  flex-shrink: 0;
+  background: var(--head);
+  border-bottom: 1px solid var(--line);
+}
+.scanbar-track { height: 2px; background: var(--line-soft); overflow: hidden; }
+.scanbar-fill {
+  height: 100%;
+  width: 30%;
+  background: var(--accent);
+  animation: sweep 1.2s ease-in-out infinite;
+}
+@keyframes sweep {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(400%); }
+}
+.scanbar-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.scanbar-step .step-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scanning-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 100%;
+  padding: 20px;
+  color: var(--text-dim);
+}
+.scanning-state .scan-what { color: var(--text); font-size: 13px; }
+.scanning-state .scan-elapsed {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+/* Respect the OS "reduce motion" setting: keep the indicators readable and
+   still clearly live, but stop the continuous sweep and spin. */
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation-duration: 2.4s; }
+  .scanbar-fill { animation: none; width: 100%; opacity: 0.45; }
 }
 
 /* ---------- Banner ---------- */

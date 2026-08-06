@@ -5,6 +5,9 @@
   let searchTerm = '';
   let sortKey = 'name';
   let sortDir = 'asc';
+  let scanning = false;
+  let scanStartedAt = 0;
+  let elapsedTimer = null;
   const selected = new Set();
 
   const $ = (id) => document.getElementById(id);
@@ -15,6 +18,7 @@
     compatBanner: $('compatBanner'), statusCounts: $('statusCounts'), statusSel: $('statusSel'),
     uninstallBtn: $('uninstallBtn'), packageLocalBtn: $('packageLocalBtn'), packageCloudBtn: $('packageCloudBtn'),
     scanLog: $('scanLog'), scanLogBody: $('scanLogBody'), logClose: $('logClose'),
+    scanBar: $('scanBar'), scanStep: $('scanStep'), statusSpinner: $('statusSpinner'),
     progressOverlay: $('progressOverlay'), progressTitle: $('progressTitle'),
     progressLog: $('progressLog'), progressCloseBtn: $('progressCloseBtn'),
   };
@@ -28,8 +32,51 @@
     box.appendChild(d);
     box.scrollTop = box.scrollHeight;
   }
-  const logScan = (m) => { el.scanLog.hidden = false; appendLine(el.scanLogBody, m); };
+  const logScan = (m) => {
+    el.scanLog.hidden = false;
+    appendLine(el.scanLogBody, m);
+    if (scanning) setStep(m);
+  };
   const logProgress = (m) => appendLine(el.progressLog, m);
+
+  // ---------- Scanning indicators ----------
+  function setStep(msg) {
+    const text = msg.trim();
+    if (!text) return;
+    el.scanStep.textContent = text;
+    const inGrid = document.getElementById('scanWhat');
+    if (inGrid) inGrid.textContent = text;
+  }
+
+  function fmtElapsed(ms) {
+    const s = Math.floor(ms / 1000);
+    return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`;
+  }
+
+  function tickElapsed() {
+    const t = fmtElapsed(Date.now() - scanStartedAt);
+    el.statusCounts.textContent = `Scanning… ${t}`;
+    const box = document.getElementById('scanElapsed');
+    if (box) box.textContent = `${t} elapsed`;
+  }
+
+  function startScanIndicators() {
+    scanning = true;
+    scanStartedAt = Date.now();
+    el.scanBar.hidden = false;
+    el.statusSpinner.hidden = false;
+    el.scanStep.textContent = 'Starting scan…';
+    tickElapsed();
+    elapsedTimer = setInterval(tickElapsed, 1000);
+  }
+
+  function stopScanIndicators() {
+    scanning = false;
+    clearInterval(elapsedTimer);
+    elapsedTimer = null;
+    el.scanBar.hidden = true;
+    el.statusSpinner.hidden = true;
+  }
 
   window.clonebox.onScanProgress(logScan);
   window.clonebox.onPackageProgress(logProgress);
@@ -68,12 +115,23 @@
   el.scanBtn.addEventListener('click', async () => {
     el.scanBtn.disabled = true;
     el.scanBtn.textContent = 'Scanning…';
-    el.statusCounts.textContent = 'Scanning…';
     el.scanLogBody.innerHTML = '';
     el.scanLog.hidden = false;
     selected.clear();
 
-    const res = await window.clonebox.runScan({ deepSizeScan: el.deepSizeScan.checked });
+    startScanIndicators();
+    // Rows from a previous scan stay put so a rescan doesn't blank the view;
+    // only a first, empty grid gets swapped for the centred spinner.
+    if (!allItems.length) renderGrid();
+
+    let res;
+    try {
+      res = await window.clonebox.runScan({ deepSizeScan: el.deepSizeScan.checked });
+    } catch (err) {
+      res = { platform: scanPlatform, items: allItems, error: err.message };
+    }
+    stopScanIndicators();
+
     allItems = res.items || [];
     scanPlatform = res.platform;
     allItems.forEach((i) => { if (i.type !== 'manual-note') selected.add(i.id); });
@@ -164,6 +222,16 @@
     const items = visibleItems();
     el.itemList.innerHTML = '';
 
+    if (!allItems.length && scanning) {
+      el.itemList.innerHTML =
+        '<div class="scanning-state">' +
+        '<div class="spinner lg"></div>' +
+        '<div class="scan-what" id="scanWhat">Starting scan…</div>' +
+        '<div class="scan-elapsed" id="scanElapsed">0s elapsed</div>' +
+        '</div>';
+      tickElapsed();
+      return;
+    }
     if (!allItems.length) {
       el.itemList.innerHTML = '<div class="placeholder"><p>Click <b>Scan Device</b> to inventory installed packages, SDKs and tool folders.</p></div>';
       return;
@@ -222,9 +290,32 @@
     c4.className = 'cell cell-src';
     c4.textContent = item.source;
 
+    // A blank cell reads as "zero bytes". Only portable folders can be walked
+    // for a size, so everything else says so rather than showing nothing.
     const c5 = document.createElement('div');
     c5.className = 'cell cell-size';
-    c5.textContent = item.bytes ? fmtBytes(item.bytes) : '';
+    if (item.bytes) {
+      // Sizes joined from the registry by name can attach to the wrong app, so
+      // inferred ones are marked and always name what they matched.
+      const inferred = item.bytesSource === 'registry-fuzzy';
+      c5.textContent = (inferred ? '≈ ' : '') + fmtBytes(item.bytes);
+      if (inferred) {
+        c5.classList.add('inferred');
+        c5.title =
+          `Estimated: matched by name to "${item.bytesMatchedName}" in Add/Remove Programs. ` +
+          `Names didn't match exactly, so check this one before trusting it.`;
+      } else if (item.bytesSource === 'registry') {
+        c5.title = `Reported by Add/Remove Programs for "${item.bytesMatchedName}".`;
+      } else {
+        c5.title = item.sizeLabel || 'Measured on disk.';
+      }
+    } else {
+      c5.textContent = '—';
+      c5.classList.add('unmeasured');
+      c5.title = item.type === 'portable-folder'
+        ? 'Not measured — tick "Measure sizes" before scanning to walk this folder.'
+        : `${item.source} doesn't report an install size, so none is shown rather than guessed.`;
+    }
 
     const c6 = document.createElement('div');
     c6.className = 'cell cell-status';

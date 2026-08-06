@@ -12,7 +12,7 @@
   <div class="toolbar">
     <button class="btn btn-default" id="scanBtn">Scan Device</button>
     <span class="sep"></span>
-    <label class="chk"><input type="checkbox" id="deepSizeScan" /> Measure sizes</label>
+    <label class="chk" title="Walk folders on disk to measure them. Slower. Windows app sizes come from Add/Remove Programs either way; this adds portable SDK/cache folders and apps the registry records a location but no size for."><input type="checkbox" id="deepSizeScan" /> Measure sizes</label>
     <label class="chk"><input type="checkbox" id="pinnedVersions" /> Pin versions</label>
     <span class="sep"></span>
     <label class="field">Target OS
@@ -50,8 +50,15 @@
         <div class="cell cell-name sortable" data-sort="name">Name</div>
         <div class="cell cell-ver sortable" data-sort="version">Version</div>
         <div class="cell cell-src sortable" data-sort="source">Source</div>
-        <div class="cell cell-size sortable" data-sort="bytes">Size</div>
+        <div class="cell cell-size sortable" data-sort="bytes" title="On-disk size. Portable folders are measured directly; Windows apps come from Add/Remove Programs. A leading ≈ means the size was matched to a registry entry by name, not exactly — hover it to see what it matched.">Size</div>
         <div class="cell cell-status sortable" data-sort="status">Transfer</div>
+      </div>
+      <div class="scanbar" id="scanBar" hidden>
+        <div class="scanbar-track"><div class="scanbar-fill"></div></div>
+        <div class="scanbar-step">
+          <span class="spinner"></span>
+          <span class="step-text" id="scanStep">Starting scan…</span>
+        </div>
       </div>
       <div class="grid-body" id="itemList">
         <div class="placeholder">
@@ -63,6 +70,7 @@
   </div>
 
   <div class="statusbar">
+    <span class="spinner" id="statusSpinner" hidden></span>
     <span id="statusCounts">Ready</span>
     <span class="status-sep">|</span>
     <span id="statusSel">0 selected</span>

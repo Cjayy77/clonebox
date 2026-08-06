@@ -78,6 +78,17 @@ async function runFullScan({ deepSizeScan = false, progressCb = () => {} } = {})
     equivalents: buildEquivalents(item),
   }));
 
+  // Package managers don't report install sizes; Windows records them in the
+  // Add/Remove Programs registry under a different name, so this joins the two.
+  if (platform === 'win32') {
+    const { attachRegistrySizes } = require('./windows-sizes');
+    try {
+      await attachRegistrySizes(deduped, { deepSizeScan, progressCb });
+    } catch (err) {
+      progressCb(`  (install sizes unavailable — ${err.message})`);
+    }
+  }
+
   const mappedCount = deduped.filter((i) => i.equivalents).length;
   progressCb(`Scan complete — ${deduped.length} items found, ${mappedCount} with known cross-OS equivalents.`);
 
