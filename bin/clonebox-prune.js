@@ -6,7 +6,7 @@
  * different question: which installed things are unreferenced by any project
  * on disk and unread for months. The answer needs provenance, not file sizes.
  */
-
+ 
 const path = require('path');
 const { runFullScan } = require('../src/scanners');
 const { probeAtime, windowsAtimeHint, VERDICT } = require('../src/prune/atime-probe');
