@@ -6,7 +6,7 @@ const path = require('path');
 const { runFullScan } = require('./scanners'); 
 const { packageSelection } = require('./packager/build');
 const { getUninstallCommand } = require('./scanners/uninstall');
-
+ 
 const execAsync = promisify(exec);
 let mainWindow;
 
