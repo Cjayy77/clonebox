@@ -28,7 +28,7 @@ clonebox-prune — find installed software nothing references anymore
 
 Usage:
   clonebox-prune [options]
-
+ 
 Options:
   --roots <a,b,c>      Directories to search for projects (default: common dev folders)
   --stale-days <n>     Project counts as inactive after this long (default: 180)
