@@ -1,5 +1,5 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
-const { exec } = require('child_process');
+const { exec } = require('child_process'); 
 const { promisify } = require('util');
 const fsp = require('fs/promises');
 const path = require('path');
