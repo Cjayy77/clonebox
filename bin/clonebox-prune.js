@@ -9,7 +9,7 @@
  
 const path = require('path');
 const { runFullScan } = require('../src/scanners');
-const { probeAtime, windowsAtimeHint, VERDICT } = require('../src/prune/atime-probe');
+const { probeAtime, windowsAtimeHint, VERDICT } = require('../src/prune/atime-probe'); 
 const { findProjects, defaultRoots } = require('../src/prune/projects');
 const { analyze, summarize, V, daysAgo } = require('../src/prune/analyze');
 const { scanCredentials, describeAge } = require('../src/prune/credentials');
