@@ -159,3 +159,8 @@ do without changing anything. Run that first.
   only.
 - Emulator system images and `.git` histories are excluded from SDK zips
   deliberately — they're large and re-downloadable.
+
+## To Add
+
+- Current dev process monitor: to know if a particular node, vite, postgres process and more is running and at which port.
+- Utilities scanning and transport: to identify installed packages or softwares via github or shell.
