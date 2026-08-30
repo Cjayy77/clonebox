@@ -160,7 +160,33 @@ do without changing anything. Run that first.
 - Emulator system images and `.git` histories are excluded from SDK zips
   deliberately — they're large and re-downloadable.
 
+## Dev Processes & Ports
+
+[#dev-processes--ports](#dev-processes--ports)
+
+A second tab, separate from the install-time inventory above: a live,
+point-in-time snapshot of what's actually *running* right now, not what's
+installed.
+
+- Matches running processes against ~40 known dev tools — node, npm/yarn/pnpm,
+  vite/webpack/next/nuxt, python/pip, Django/Flask/uvicorn/gunicorn, Rails,
+  Postgres/MySQL/MongoDB/Redis, Docker, nginx, and more (full list in
+  `src/scanners/processes.js`).
+- Cross-references each one against listening TCP ports, so a row reads
+  "Vite dev server · PID 4213 · :5173" instead of two separate facts you'd
+  have to correlate yourself.
+- Any listening port whose owning process couldn't be resolved (common
+  without elevated permissions) is still surfaced, just without a process
+  name attached — the goal is always answering "is something already on
+  port 5432" even when attribution is partial.
+- Manual refresh or optional 3-second auto-refresh. A "Kill" button sends a
+  plain `SIGTERM` / `taskkill /F` — same no-elevation policy as uninstall
+  above, nothing is force-killed with escalated privileges.
+- Linux port detection tries `lsof`, then `ss`, then falls back to reading
+  `/proc/net/tcp(6)` directly plus a `/proc/<pid>/fd` walk, so it still
+  works on minimal images with neither tool installed. macOS uses `lsof`;
+  Windows uses `netstat -ano` with `tasklist`/CIM for process names.
+
 ## To Add
 
-- Current dev process monitor: to know if a particular node, vite, postgres process and more is running and at which port.
 - Utilities scanning and transport: to identify installed packages or softwares via github or shell.

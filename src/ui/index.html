@@ -34,7 +34,12 @@
     <input type="search" id="searchInput" class="search" placeholder="Search" />
   </div>
 
-  <div class="split">
+  <div class="tabbar">
+    <button class="tab active" id="tabInventory" data-view="inventory">Inventory</button>
+    <button class="tab" id="tabActivity" data-view="activity">Dev Processes &amp; Ports</button>
+  </div>
+
+  <div class="split" id="inventoryView">
     <div class="pane-left">
       <div class="pane-head">Categories</div>
       <ul class="tree" id="categoryList">
@@ -66,6 +71,30 @@
         </div>
       </div>
       <div class="banner" id="compatBanner" hidden></div>
+    </div>
+  </div>
+
+  <div class="split" id="activityView" hidden>
+    <div class="pane-right" style="flex: 1;">
+      <div class="toolbar" style="border-bottom: 1px solid var(--line);">
+        <button class="btn btn-default" id="activityRefreshBtn">Refresh</button>
+        <label class="chk"><input type="checkbox" id="activityAutoRefresh" /> Auto-refresh every 3s</label>
+        <div class="spacer"></div>
+        <span id="activityUpdated" class="chk"></span>
+      </div>
+      <div class="grid-head">
+        <div class="cell cell-name" style="flex: 1.4;">Process</div>
+        <div class="cell cell-ver">PID</div>
+        <div class="cell cell-src" style="width: 130px;">Type</div>
+        <div class="cell cell-status" style="width: 130px;">Ports</div>
+        <div class="cell cell-check" style="width: 70px;">Action</div>
+      </div>
+      <div class="grid-body" id="activityList">
+        <div class="placeholder">
+          <p>Click <b>Refresh</b> to detect running dev processes (node, npm, pip, postgres, etc.) and the ports they're listening on.</p>
+        </div>
+      </div>
+      <div class="banner" id="unattributedPortsBanner" hidden></div>
     </div>
   </div>
 

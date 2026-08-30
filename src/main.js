@@ -6,6 +6,7 @@ const path = require('path');
 const { runFullScan } = require('./scanners'); 
 const { packageSelection } = require('./packager/build');
 const { getUninstallCommand } = require('./scanners/uninstall');
+const { scanActivity } = require('./scanners/processes');
  
 const execAsync = promisify(exec);
 let mainWindow;
@@ -139,4 +140,33 @@ ipcMain.handle('device:uninstall', async (event, { items }) => {
   }
 
   return { results, deferredPath };
+});
+
+// --- Live dev-process / listening-port detection ---
+// A read-only snapshot: no progress channel needed since it's a single
+// point-in-time scan (typically well under a second), unlike the package
+// inventory scan which can run for tens of seconds.
+ipcMain.handle('activity:scan', async () => {
+  try {
+    return await scanActivity();
+  } catch (err) {
+    return { platform: process.platform, processes: [], unattributedPorts: [], error: err.message };
+  }
+});
+
+// Only ever a plain SIGTERM / taskkill — never elevated. A process this app
+// can't already see permission to signal is left alone rather than retried
+// with sudo/UAC, same policy as the uninstall path.
+ipcMain.handle('activity:killProcess', async (_event, { pid }) => {
+  if (!pid) return { ok: false, error: 'no pid given' };
+  try {
+    if (process.platform === 'win32') {
+      await execAsync(`taskkill /PID ${pid} /F`, { timeout: 10000, windowsHide: true });
+    } else {
+      process.kill(pid, 'SIGTERM');
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
 });

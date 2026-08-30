@@ -130,6 +130,42 @@ select {
 }
 .search:focus, select:focus { outline: 1px solid var(--accent); outline-offset: -1px; }
 
+/* ---------- View tabs ---------- */
+.tabbar {
+  display: flex;
+  background: var(--head);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.tab {
+  font-family: var(--font);
+  font-size: 12px;
+  padding: 6px 14px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--text-dim);
+}
+.tab:hover { color: var(--text); background: var(--hover); }
+.tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+
+/* ---------- Dev-process / port rows ---------- */
+.proc-ports { display: flex; flex-wrap: wrap; gap: 3px; }
+.port-chip {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: var(--sel);
+  color: var(--sel-text);
+}
+.row.unknown-proc { color: var(--text-faint); }
+.kill-btn {
+  font-size: 10.5px;
+  padding: 1px 7px;
+  min-height: 0;
+}
+
 /* ---------- Split panes ---------- */
 .split { display: flex; flex: 1; min-height: 0; }
 

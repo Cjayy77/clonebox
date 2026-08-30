@@ -10,5 +10,7 @@ contextBridge.exposeInMainWorld('clonebox', {
   openFolder: (p) => ipcRenderer.invoke('shell:openFolder', p),
   uninstallItems: (items) => ipcRenderer.invoke('device:uninstall', { items }),
   onUninstallProgress: (cb) => ipcRenderer.on('uninstall:progress', (_e, msg) => cb(msg)),
+  scanActivity: () => ipcRenderer.invoke('activity:scan'),
+  killProcess: (pid) => ipcRenderer.invoke('activity:killProcess', { pid }),
   platform: process.platform,
 });

@@ -21,6 +21,11 @@
     scanBar: $('scanBar'), scanStep: $('scanStep'), statusSpinner: $('statusSpinner'),
     progressOverlay: $('progressOverlay'), progressTitle: $('progressTitle'),
     progressLog: $('progressLog'), progressCloseBtn: $('progressCloseBtn'),
+    tabInventory: $('tabInventory'), tabActivity: $('tabActivity'),
+    inventoryView: $('inventoryView'), activityView: $('activityView'),
+    activityRefreshBtn: $('activityRefreshBtn'), activityAutoRefresh: $('activityAutoRefresh'),
+    activityUpdated: $('activityUpdated'), activityList: $('activityList'),
+    unattributedPortsBanner: $('unattributedPortsBanner'),
   };
 
   const OS_LABEL = { win32: 'Windows', darwin: 'macOS', linux: 'Linux' };
@@ -457,5 +462,134 @@
       el.progressOverlay.hidden = true;
       el.scanBtn.click();
     };
+  });
+
+  // ---------- Dev Processes & Ports tab ----------
+  let activityTimer = null;
+
+  function switchView(view) {
+    const showActivity = view === 'activity';
+    el.tabInventory.classList.toggle('active', !showActivity);
+    el.tabActivity.classList.toggle('active', showActivity);
+    el.inventoryView.hidden = showActivity;
+    el.activityView.hidden = !showActivity;
+    if (showActivity && !el.activityList.dataset.loaded) refreshActivity();
+  }
+  el.tabInventory.addEventListener('click', () => switchView('inventory'));
+  el.tabActivity.addEventListener('click', () => switchView('activity'));
+
+  function fmtTime(iso) {
+    try { return new Date(iso).toLocaleTimeString(); } catch { return ''; }
+  }
+
+  async function refreshActivity() {
+    el.activityRefreshBtn.disabled = true;
+    let res;
+    try {
+      res = await window.clonebox.scanActivity();
+    } catch (err) {
+      res = { processes: [], unattributedPorts: [], error: err.message };
+    }
+    el.activityRefreshBtn.disabled = false;
+    el.activityList.dataset.loaded = '1';
+    renderActivity(res);
+  }
+
+  function renderActivity(res) {
+    el.activityUpdated.textContent = res.error
+      ? `Error: ${res.error}`
+      : `Updated ${fmtTime(res.scannedAt || Date.now())}`;
+
+    el.activityList.innerHTML = '';
+    const procs = res.processes || [];
+    if (!procs.length) {
+      const p = document.createElement('div');
+      p.className = 'placeholder';
+      p.textContent = 'No dev processes or open ports detected.';
+      el.activityList.appendChild(p);
+    } else {
+      const frag = document.createDocumentFragment();
+      procs.forEach((proc) => frag.appendChild(makeActivityRow(proc)));
+      el.activityList.appendChild(frag);
+    }
+
+    const unattr = res.unattributedPorts || [];
+    if (unattr.length) {
+      el.unattributedPortsBanner.hidden = false;
+      const chips = unattr
+        .sort((a, b) => a.port - b.port)
+        .map((p) => `<b>${p.port}</b>`)
+        .join(', ');
+      el.unattributedPortsBanner.innerHTML =
+        `Also listening, but the owning process couldn't be identified ` +
+        `(often needs elevated permissions to resolve): ${chips}`;
+    } else {
+      el.unattributedPortsBanner.hidden = true;
+    }
+  }
+
+  function makeActivityRow(proc) {
+    const row = document.createElement('div');
+    row.className = 'row' + (proc.kind === 'unknown' ? ' unknown-proc' : '');
+
+    const c1 = document.createElement('div');
+    c1.className = 'cell cell-name';
+    c1.style.flex = '1.4';
+    c1.textContent = `${proc.label}${proc.name && proc.name !== proc.label ? ` (${proc.name})` : ''}`;
+    c1.title = proc.command || proc.name;
+
+    const c2 = document.createElement('div');
+    c2.className = 'cell cell-ver';
+    c2.textContent = proc.pid;
+
+    const c3 = document.createElement('div');
+    c3.className = 'cell cell-src';
+    c3.style.width = '130px';
+    c3.textContent = proc.kind === 'unknown' ? 'Unclassified' : proc.kind;
+
+    const c4 = document.createElement('div');
+    c4.className = 'cell cell-status proc-ports';
+    c4.style.width = '130px';
+    if (proc.ports && proc.ports.length) {
+      proc.ports.forEach((p) => {
+        const chip = document.createElement('span');
+        chip.className = 'port-chip';
+        chip.textContent = p.port;
+        c4.appendChild(chip);
+      });
+    } else {
+      c4.textContent = '—';
+    }
+
+    const c5 = document.createElement('div');
+    c5.className = 'cell cell-check';
+    c5.style.width = '70px';
+    const killBtn = document.createElement('button');
+    killBtn.className = 'btn btn-danger kill-btn';
+    killBtn.textContent = 'Kill';
+    killBtn.title = `Send SIGTERM to PID ${proc.pid}`;
+    killBtn.addEventListener('click', async () => {
+      if (!window.confirm(`Stop ${proc.label} (PID ${proc.pid})?`)) return;
+      killBtn.disabled = true;
+      killBtn.textContent = '…';
+      const result = await window.clonebox.killProcess(proc.pid);
+      if (!result.ok) window.alert(`Couldn't stop it: ${result.error}`);
+      refreshActivity();
+    });
+    c5.appendChild(killBtn);
+
+    row.append(c1, c2, c3, c4, c5);
+    return row;
+  }
+
+  el.activityRefreshBtn.addEventListener('click', refreshActivity);
+  el.activityAutoRefresh.addEventListener('change', () => {
+    clearInterval(activityTimer);
+    activityTimer = null;
+    if (el.activityAutoRefresh.checked) {
+      activityTimer = setInterval(() => {
+        if (!el.activityView.hidden) refreshActivity();
+      }, 3000);
+    }
   });
 })();
