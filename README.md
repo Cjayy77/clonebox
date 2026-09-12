@@ -186,7 +186,3 @@ installed.
   `/proc/net/tcp(6)` directly plus a `/proc/<pid>/fd` walk, so it still
   works on minimal images with neither tool installed. macOS uses `lsof`;
   Windows uses `netstat -ano` with `tasklist`/CIM for process names.
-
-## To Add
-
-- Utilities scanning and transport: to identify installed packages or softwares via github or shell.
